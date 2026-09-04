@@ -1,0 +1,14 @@
+{
+  "name": "Pokémon Roguelike (proyecto de fan no oficial)",
+  "short_name": "Poké Roguelike",
+  "description": "Roguelike de combates por turnos con datos reales de Pokémon. Proyecto de fan no oficial, gratis, sin descargar.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f5f1",
+  "theme_color": "#c8313f",
+  "lang": "es",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

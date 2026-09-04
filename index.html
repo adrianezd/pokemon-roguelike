@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pokémon Roguelike (proyecto de fan) | Combates por turnos gratis</title>
+<meta name="description" content="Pokémon Roguelike es un juego de fan no oficial, gratis y sin descargar: roguelike Pokémon por turnos con datos reales de PokeAPI (tipos, estadísticas y movimientos), mazmorra ramificada, captura de criaturas y jefes. Juega en el móvil o el navegador. No afiliado a Nintendo, Game Freak ni The Pokémon Company.">
+<meta name="keywords" content="roguelike Pokémon, juego de fan, juego gratis, sin descargar, juego Pokémon navegador, juego móvil HTML5, PokeAPI, combates por turnos, captura Pokémon, no oficial">
+<meta name="author" content="adrianezd">
+<link rel="canonical" href="https://adrianezd.github.io/pokemon-roguelike/">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Pokémon Roguelike (proyecto de fan no oficial)">
+<meta property="og:description" content="Roguelike Pokémon por turnos, gratis y sin descargar. Datos reales de PokeAPI, visuales 100% originales (sin sprites oficiales). Fan game no afiliado a Nintendo/Game Freak/The Pokémon Company.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adrianezd.github.io/pokemon-roguelike/">
+<meta property="og:image" content="https://adrianezd.github.io/pokemon-roguelike/favicon.svg">
+<meta property="og:locale" content="es_ES">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pokémon Roguelike (proyecto de fan no oficial)">
+<meta name="twitter:description" content="Roguelike Pokémon por turnos, gratis y sin descargar. Datos reales de PokeAPI, visuales 100% originales. No oficial.">
+<meta name="twitter:image" content="https://adrianezd.github.io/pokemon-roguelike/favicon.svg">
+
+<meta name="theme-color" content="#c8313f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "Pokémon Roguelike (proyecto de fan no oficial)",
+  "description": "Roguelike de combates por turnos hecho por un fan, con datos reales de Pokémon (tipos, estadísticas base y movimientos) obtenidos de PokeAPI. Elige tu inicial, explora una mazmorra ramificada, captura Pokémon salvajes, derrota entrenadores y jefes. Proyecto no oficial, sin sprites ni artwork de Nintendo/Game Freak/The Pokémon Company.",
+  "genre": ["Roguelike", "Turn-based strategy", "Creature collecting"],
+  "applicationCategory": "Game",
+  "gamePlatform": "Web Browser",
+  "url": "https://adrianezd.github.io/pokemon-roguelike/",
+  "image": "https://adrianezd.github.io/pokemon-roguelike/favicon.svg",
+  "inLanguage": "es",
+  "isAccessibleForFree": true,
+  "author": { "@type": "Person", "name": "adrianezd" }
+}
+</script>
+</head>
+<body>
+<div class="page">
+  <header class="site-header">
+    <h1>Pokémon Roguelike <span style="color:var(--ink-soft); font-weight:600; font-size:0.6em;">(proyecto de fan)</span></h1>
+    <p class="tagline">Elige tu inicial, explora una mazmorra ramificada con datos reales de Pokémon y libra combates por turnos hasta el jefe final.</p>
+    <p class="disclaimer-top">Proyecto de fan no oficial. No afiliado a Nintendo, Game Freak ni The Pokémon Company. Datos de PokeAPI (pokeapi.co), sin usar sprites ni artwork oficiales.</p>
+  </header>
+
+  <main>
+    <section id="game-app" aria-label="Juego">
+      <div id="game-root"><p class="loading-msg">Cargando juego…</p></div>
+    </section>
+
+    <section id="how-to-play" class="how-to-play">
+      <h2>Cómo jugar</h2>
+
+      <h3>Objetivo</h3>
+      <p>Elige un Pokémon inicial y avanza por un camino ramificado de nodos: encuentros salvajes, combates de entrenador, curación, tienda y un jefe cada 5 nodos. Si tu equipo entero se debilita, la partida termina (permadeath), pero conservas tus <strong>Créditos</strong> y progreso permanente entre partidas.</p>
+
+      <h3>Tipos y tabla de eficacia real</h3>
+      <p>Se usan los 18 tipos reales de los juegos Pokémon, con la tabla de eficacia real (daño doble, mitad o nulo según el tipo atacante y el/los tipo(s) defensor(es), incluyendo Pokémon de doble tipo). Los datos provienen de PokeAPI.</p>
+      <div class="table-wrap" id="type-chart-wrap">
+        <p class="muted">Cargando tabla de tipos…</p>
+      </div>
+
+      <h3>Combate</h3>
+      <ul>
+        <li>Tu Pokémon activo tiene hasta 4 movimientos reales con tipo, potencia y precisión, elegidos de su repertorio real de nivel.</li>
+        <li>El daño depende del Ataque, la Defensa rival, la potencia del movimiento y el multiplicador de tipo.</li>
+        <li>Puedes cambiar de Pokémon activo (equipo de hasta 3), usar objetos, o en encuentros salvajes intentar <strong>Capturar</strong>: cuanta menos vida le quede al Pokémon salvaje, más probabilidades tienes (los Pokémon con estadísticas totales más altas son algo más difíciles de capturar).</li>
+        <li>El rival (IA) elige movimiento cada turno; el orden de actuación depende de la Velocidad.</li>
+      </ul>
+
+      <h3>Progresión</h3>
+      <p>Ganas <strong>Créditos</strong> al vencer combates. Se pueden gastar en la Tienda durante la partida (pociones, Poké Balls de captura, potenciadores) y lo que sobre al terminar la partida se guarda de forma permanente para desbloquear nuevos Pokémon iniciales en el menú de Mejoras. El <strong>Registro</strong> guarda todos los Pokémon vistos y capturados.</p>
+
+      <h3>Sobre los datos y los visuales</h3>
+      <p>Los nombres, tipos, estadísticas base y movimientos son datos reales obtenidos de <a href="https://pokeapi.co" rel="noopener">PokeAPI</a>, una API pública gratuita usada por miles de proyectos de fans. Todos los visuales (avatares, iconos, insignias de tipo) son formas geométricas y colores originales creados con CSS/SVG — este proyecto no usa ni enlaza ningún sprite, artwork o logo oficial.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Hecho por un fan, por diversión.</p>
+    <p class="disclaimer">Proyecto de fan no oficial. No afiliado a Nintendo, Game Freak ni The Pokémon Company. Datos de PokeAPI (pokeapi.co), sin usar sprites ni artwork oficiales.</p>
+  </footer>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
