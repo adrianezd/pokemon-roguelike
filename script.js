@@ -524,20 +524,41 @@ function renderDex() {
 }
 
 /* ---------- MAP ---------- */
+// Reordenar el equipo (quién va primero/segundo/tercero) fuera de combate:
+// toca un Pokémon de la tira y luego toca otro para intercambiarlos.
+let partyHostRedraw = null;
+let partySwapIndex = null;
+function swapParty(idx) {
+  if (partySwapIndex === null) {
+    partySwapIndex = idx;
+  } else if (partySwapIndex === idx) {
+    partySwapIndex = null;
+  } else {
+    const tmp = runState.party[partySwapIndex];
+    runState.party[partySwapIndex] = runState.party[idx];
+    runState.party[idx] = tmp;
+    partySwapIndex = null;
+  }
+  if (partyHostRedraw) partyHostRedraw();
+}
+
 function partyStripHTML() {
-  return `<div class="party-strip">${runState.party.map(p => {
+  const canReorder = !battle && runState.party.length > 1;
+  return `<div class="party-strip">${runState.party.map((p, idx) => {
     const sp = getSpecies(p.speciesKey);
     const pct = Math.round((p.currentHP / p.maxHP) * 100);
+    const sel = idx === partySwapIndex ? ' selected' : '';
     return `
-      <div class="party-chip ${p.currentHP <= 0 ? 'fainted' : ''}">
-        <div class="chip-name">${esc(sp.name)} Nv.${p.level}</div>
+      <div class="party-chip ${p.currentHP <= 0 ? 'fainted' : ''}${sel}" ${canReorder ? `onclick="swapParty(${idx})" role="button" tabindex="0"` : ''}>
+        <div class="chip-name">${idx + 1}. ${esc(sp.name)} Nv.${p.level}</div>
         <div class="hp-bar-outer"><div class="hp-bar-inner ${hpBarClass(pct)}" style="width:${pct}%"></div></div>
         <div class="hp-text">${p.currentHP}/${p.maxHP} PS</div>
       </div>`;
-  }).join('')}</div>`;
+  }).join('')}</div>${canReorder ? '<p class="muted small center">Toca dos Pokémon para cambiarlos de orden.</p>' : ''}`;
 }
 
 function renderMap() {
+  partyHostRedraw = renderMap;
   const nextIndex = runState.depth + 1;
   const trail = runState.history.map(t => {
     return `<div class="node-dot ${t === 'boss' ? 'boss' : ''}" title="${esc(nodeMeta(t).label)}">${nodeIconSVG(t, true)}</div>`;
@@ -586,6 +607,7 @@ function advanceAfterNode(type) {
 
 /* ---------- HEAL NODE ---------- */
 function resolveHeal() {
+  partyHostRedraw = resolveHeal;
   runState.party.forEach(p => { p.currentHP = p.maxHP; });
   showHTML(`
     <p class="screen-title">Centro de Curación</p>
@@ -602,6 +624,7 @@ function renderShop() {
   renderShopInner();
 }
 function renderShopInner() {
+  partyHostRedraw = renderShopInner;
   const rows = shopOffer.map(id => {
     const it = ITEMS[id];
     const owned = it.kind !== 'buff' ? ` (tienes ${runState.inventory[id] || 0})` : '';

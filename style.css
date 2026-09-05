@@ -335,8 +335,11 @@ h3 { font-size: 1.02rem; font-weight: 700; color: var(--ink); margin-bottom: 6px
 
 .party-strip { display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; }
 .party-chip { flex-shrink: 0; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 6px 8px; min-width: 96px; background: #fff; }
+.party-chip[role="button"] { cursor: pointer; touch-action: manipulation; }
+.party-chip.selected { border-color: var(--accent, #2f855a); box-shadow: 0 0 0 2px var(--accent, #2f855a); }
 .party-chip .chip-name { font-weight: 700; font-size: 0.76rem; }
 .party-chip.fainted { opacity: 0.5; }
+.small { font-size: 0.78rem; }
 
 .item-card {
   display: flex;
