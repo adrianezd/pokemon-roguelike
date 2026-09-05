@@ -28,7 +28,82 @@ function getEffectiveness(attackType, defendTypes) {
   return mult;
 }
 
-function getSpecies(key) { return POKEMON_BY_KEY[key]; }
+const LEGENDARY_KEYS = new Set(['articuno', 'zapdos', 'moltres', 'mewtwo', 'mew', 'raikou', 'entei', 'suicune', 'lugia', 'ho-oh', 'celebi']);
+
+const EVOLUTION_MAP = {
+  bulbasaur: 'ivysaur', ivysaur: 'venusaur',
+  charmander: 'charmeleon', charmeleon: 'charizard',
+  squirtle: 'wartortle', wartortle: 'blastoise',
+  caterpie: 'metapod', metapod: 'butterfree',
+  weedle: 'kakuna', kakuna: 'beedrill',
+  pidgey: 'pidgeotto', pidgeotto: 'pidgeot',
+  rattata: 'raticate', spearow: 'fearow',
+  ekans: 'arbok', sandshrew: 'sandslash',
+  nidoran-f: 'nidorina', nidorina: 'nidoqueen',
+  nidoran-m: 'nidorino', nidorino: 'nidoking',
+  clefairy: 'clefable', vulpix: 'ninetales',
+  jigglypuff: 'wigglytuff', zubat: 'golbat',
+  oddish: 'gloom', gloom: 'vileplume',
+  paras: 'parasect', venonat: 'venomoth',
+  diglett: 'dugtrio', meowth: 'persian',
+  psyduck: 'golduck', mankey: 'primeape',
+  growlithe: 'arcanine', poliwag: 'poliwhirl', poliwhirl: 'poliwrath',
+  abra: 'kadabra', kadabra: 'alakazam',
+  machop: 'machoke', machoke: 'machamp',
+  bellsprout: 'weepinbell', weepinbell: 'victreebel',
+  tentacool: 'tentacruel', geodude: 'graveler', graveler: 'golem',
+  ponyta: 'rapidash', slowpoke: 'slowbro',
+  magnemite: 'magneton', doduo: 'dodrio',
+  seel: 'dewgong', grimer: 'muk',
+  shellder: 'cloyster', gastly: 'haunter', haunter: 'gengar',
+  onix: 'steelix', drowzee: 'hypno',
+  krabby: 'kingler', voltorb: 'electrode',
+  exeggcute: 'exeggutor', cubone: 'marowak',
+  lickitung: 'lickilicky', koffing: 'weezing',
+  rhyhorn: 'rhydon', chansey: 'blissey',
+  tangela: 'tangrowth', horsea: 'seadra', seadra: 'kingdra',
+  goldeen: 'seaking', staryu: 'starmie',
+  mr-mime: 'mime-jr', scyther: 'scizor',
+  jynx: 'smoochum', electabuzz: 'elekid',
+  magmar: 'magby', pinsir: 'pinsir',
+  magikarp: 'gyarados', ditto: 'ditto',
+  eevee: 'vaporeon', porygon: 'porygon2',
+  omanyte: 'omastar', kabuto: 'kabutops',
+  dratini: 'dragonair', dragonair: 'dragonite',
+  chikorita: 'bayleef', bayleef: 'meganium',
+  cyndaquil: 'quilava', quilava: 'typhlosion',
+  totodile: 'croconaw', croconaw: 'feraligatr',
+  sentret: 'furret', hoothoot: 'noctowl',
+  ledyba: 'ledian', spinarak: 'ariados',
+  chinchou: 'lanturn', pichu: 'pikachu',
+  cleffa: 'clefairy', igglybuff: 'jigglypuff',
+  togepi: 'togetic', togetic: 'togekiss',
+  natu: 'xatu', mareep: 'flaaffy', flaaffy: 'ampharos',
+  marill: 'azumarill', hoppip: 'skiploom', skiploom: 'jumpluff',
+  aipom: 'aipom', sunkern: 'sunflora',
+  yanma: 'yanmega', wooper: 'quagsire',
+  murkrow: 'honchkrow', misdreavus: 'mismagius',
+  girafarig: 'girafarig', pineco: 'forretress',
+  gligar: 'gliscor', snubbull: 'granbull',
+  qwilfish: 'qwilfish', heracross: 'heracross',
+  sneasel: 'weavile', teddiursa: 'ursaring',
+  slugma: 'magcargo', swinub: 'piloswine',
+  corsola: 'corsola', remoraid: 'octillery',
+  houndour: 'houndoom', larvitar: 'pupitar', pupitar: 'tyranitar',
+};
+
+function getSpecies(key) {
+  let species = POKEMON_BY_KEY[key];
+  if (species && LEGENDARY_KEYS.has(key)) {
+    species = Object.assign({}, species, {
+      baseHP: species.baseHP + 1,
+      baseAtk: species.baseAtk + 1,
+      baseDef: species.baseDef + 1,
+      baseSpd: species.baseSpd + 1,
+    });
+  }
+  return species;
+}
 
 /* ---------------------- STARTER CONFIG ------------------------ */
 // Curated subset of the full Pokédex usable as a run starter, with a
@@ -244,9 +319,9 @@ function avgPartyLevel() {
 function enemyLevelFor(kind) {
   const avg = avgPartyLevel();
   let offset;
-  if (kind === 'wild') offset = -1 + rand(2); // roughly on par, sometimes a bit weaker
-  else if (kind === 'trainer') offset = 1; // a modest single edge...
-  else offset = 3; // ...a little more for bosses — but never stacked on top of anything else
+  if (kind === 'wild') offset = -1; // weaker wild encounters for easier start
+  else if (kind === 'trainer') offset = 0; // on par with player
+  else offset = 2; // bosses have slight edge
   // Boss offset nudged +2 -> +3 for a small, targeted difficulty increase
   // (content-expansion pass, not a rebalance) — see README "Simulación de
   // balance" for the original 800-run tuning this builds on.
@@ -865,7 +940,7 @@ async function turnMove(moveKey) {
   // Speed determines turn order, but with a ±10% random jitter so a small
   // speed edge doesn't guarantee first move every time (big gaps still win out).
   const entries = [
-    { side: 'player', move: moveKey, spd: activePlayerInst().spd * (0.9 + Math.random() * 0.2) },
+    { side: 'player', move: moveKey, spd: activePlayerInst().spd * 1.15 }, // player gets 15% speed bonus
     { side: 'enemy', move: enemyMove, spd: activeEnemyInst().spd * (0.9 + Math.random() * 0.2) },
   ].sort((a, b) => b.spd - a.spd);
 
@@ -1012,7 +1087,26 @@ async function onBattleWin(opts) {
       : 40 + rand(21);
     runState.credits += reward;
     const levelGain = battle.kind === 'boss' ? 3 : 2;
-    runState.party.forEach(p => { if (p.currentHP > 0) p.level = Math.min(MAX_LEVEL, p.level + levelGain); });
+    runState.party.forEach(p => {
+      if (p.currentHP > 0) {
+        p.level = Math.min(MAX_LEVEL, p.level + levelGain);
+        if ((p.level === 10 || p.level === 15) && EVOLUTION_MAP[p.speciesKey]) {
+          const evolved = EVOLUTION_MAP[p.speciesKey];
+          const newSpecies = getSpecies(evolved);
+          const oldName = getSpecies(p.speciesKey).name;
+          logMsg(`¡${oldName} está evolucionando!`);
+          p.speciesKey = evolved;
+          const s = statsForLevel(newSpecies, p.level);
+          p.maxHP = s.maxHP;
+          p.currentHP = Math.min(p.currentHP + (s.maxHP - p.maxHP), s.maxHP);
+          p.atk = s.atk;
+          p.def = s.def;
+          p.spd = s.spd;
+          p.moves = newSpecies.moves.slice(0, 3);
+          logMsg(`¡${newSpecies.name} ha sido capaz de evolucionar!`);
+        }
+      }
+    });
     logMsg(`Ganas ${reward} Créditos.`);
   }
   renderBattle();
