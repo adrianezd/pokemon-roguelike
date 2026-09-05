@@ -513,9 +513,67 @@ function renderShopInner() {
     <p class="screen-title">Tienda</p>
     <p class="muted mb">Créditos disponibles: <strong>${runState.credits}</strong></p>
     <div class="stack">${rows}</div>
+    <button class="btn btn-small mt" onclick="renderMoveShopPicker()">📖 Comprar movimiento para un Pokémon</button>
     ${partyStripHTML()}
     <button class="btn mt" onclick="advanceAfterNode('shop')">Salir de la tienda</button>
   `);
+}
+
+/* ---------- COMPRAR MOVIMIENTOS ---------- */
+function moveBuyPrice(moveKey) {
+  const m = MOVES[moveKey];
+  return 20 + Math.round((m.power || 40) * 0.4);
+}
+
+function renderMoveShopPicker() {
+  const options = runState.party.map((p, idx) => {
+    const sp = getSpecies(p.speciesKey);
+    const learned = new Set(p.moves);
+    const available = sp.moves.filter(k => !learned.has(k));
+    const status = available.length
+      ? `${p.moves.length}/${sp.moves.length} movimientos aprendidos`
+      : 'Ya conoce todos sus movimientos disponibles';
+    return `<button class="node-card" ${available.length ? '' : 'disabled'} onclick="renderMoveShopForMon(${idx})">${monAvatarHTML(sp, 'sm')}<span><span class="node-label">${esc(sp.name)} Nv.${p.level}</span><div class="node-desc">${status}</div></span></button>`;
+  }).join('');
+  showHTML(`
+    <p class="screen-title">¿A qué Pokémon quieres enseñarle un movimiento?</p>
+    <div class="stack">${options}</div>
+    <button class="btn mt" onclick="renderShopInner()">Volver a la tienda</button>
+  `);
+}
+
+function renderMoveShopForMon(idx) {
+  const p = runState.party[idx];
+  const sp = getSpecies(p.speciesKey);
+  const learned = new Set(p.moves);
+  const available = sp.moves.filter(k => !learned.has(k));
+  const rows = available.map(k => {
+    const m = MOVES[k];
+    const price = moveBuyPrice(k);
+    return `
+      <div class="item-card">
+        <div>
+          <div class="item-name">${esc(m.name)}</div>
+          <div class="item-desc">${typeBadge(m.type)} · Pot ${m.power} · Prec ${m.accuracy}%</div>
+        </div>
+        <button class="btn btn-small" ${runState.credits < price ? 'disabled' : ''} onclick="buyMove(${idx}, '${k}')">${price} Cr.</button>
+      </div>`;
+  }).join('') || '<p class="muted">Ya conoce todos sus movimientos disponibles.</p>';
+  showHTML(`
+    <p class="screen-title">Enseñar movimiento a ${esc(sp.name)}</p>
+    <p class="muted mb">Créditos disponibles: <strong>${runState.credits}</strong></p>
+    <div class="stack">${rows}</div>
+    <button class="btn mt" onclick="renderMoveShopPicker()">Volver</button>
+  `);
+}
+
+function buyMove(idx, moveKey) {
+  const p = runState.party[idx];
+  const price = moveBuyPrice(moveKey);
+  if (runState.credits < price || p.moves.includes(moveKey)) return;
+  runState.credits -= price;
+  p.moves.push(moveKey);
+  renderMoveShopForMon(idx);
 }
 
 function buyItem(id) {
@@ -953,7 +1011,8 @@ async function onBattleWin(opts) {
       : battle.kind === 'trainer' ? 15 + rand(11)
       : 40 + rand(21);
     runState.credits += reward;
-    runState.party.forEach(p => { if (p.currentHP > 0) p.level = Math.min(MAX_LEVEL, p.level + 1); });
+    const levelGain = battle.kind === 'boss' ? 3 : 2;
+    runState.party.forEach(p => { if (p.currentHP > 0) p.level = Math.min(MAX_LEVEL, p.level + levelGain); });
     logMsg(`Ganas ${reward} Créditos.`);
   }
   renderBattle();
