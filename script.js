@@ -1237,6 +1237,10 @@ async function onBattleWin(opts) {
       }
     });
     logMsg(`Ganas ${reward} Créditos.`);
+    if (battle.kind === 'boss') {
+      runState.party.forEach(p => { p.currentHP = p.maxHP; });
+      logMsg('¡Tu equipo se recupera por completo tras vencer al jefe!');
+    }
   }
   renderBattle();
   await delay(900);
