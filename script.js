@@ -557,7 +557,11 @@ function applyBuff(idx) {
 // alone swing a fight in one blow — those moves' real drawbacks
 // (self-KO, recharge, etc.) aren't modeled, so this keeps them strong
 // without being an instant-kill button. Tuned via simulation.
-const MAX_HIT_FRACTION = 0.45;
+const MAX_HIT_FRACTION = 0.85; // subido desde 0.45: con ventaja elemental (x2), ese tope se
+// alcanzaba con casi cualquier movimiento de potencia media, así que todos los golpes
+// "grandes" acababan dando el mismo daño sin importar la potencia real del movimiento.
+// 0.85 sigue evitando el KO de un solo golpe con las combinaciones más extremas
+// (potencia 150-250 + ventaja de tipo) sin aplanar la potencia en el resto de casos.
 const DMG_SCALE = 0.16;
 
 function activePlayerInst() { return runState.party[battle.playerActive]; }
