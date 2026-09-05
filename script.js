@@ -220,13 +220,23 @@ function hpBarClass(pct) {
   if (pct <= 55) return 'mid';
   return '';
 }
+// Sprite oficial real (vía el mismo repositorio de sprites que usa PokeAPI)
+// con el círculo de iniciales/color por tipo como respaldo si la imagen no
+// carga (sin conexión, id sin sprite, etc.) -- probado a petición explícita
+// del usuario, que entiende y acepta que esto usa arte oficial con copyright
+// en vez del diseño 100% original que llevaba el resto del proyecto.
 function monAvatarHTML(species, size) {
   const cls = 'mon-avatar' + (size === 'sm' ? ' sm' : '');
   const letters = esc(species.name.replace(/[^A-Za-zÀ-ÿ]/g, '').slice(0, 2).toUpperCase());
-  if (species.types.length === 1) {
-    return `<div class="${cls} type-fill-${species.types[0]}"><span class="mono">${letters}</span></div>`;
-  }
-  return `<div class="${cls}"><span class="half left type-fill-${species.types[0]}"></span><span class="half right type-fill-${species.types[1]}"></span><span class="mono">${letters}</span></div>`;
+  const fallbackInner = species.types.length === 1
+    ? `<span class="mono">${letters}</span>`
+    : `<span class="half left type-fill-${species.types[0]}"></span><span class="half right type-fill-${species.types[1]}"></span><span class="mono">${letters}</span>`;
+  const typeBgCls = species.types.length === 1 ? ` type-fill-${species.types[0]}` : '';
+  const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${species.id}.png`;
+  return `<div class="${cls}${typeBgCls}">
+    <img class="mon-sprite" src="${spriteUrl}" alt="${esc(species.name)}" loading="lazy" onerror="this.remove(); this.parentElement.querySelector('.mon-fallback').style.display='';">
+    <span class="mon-fallback" style="display:none">${fallbackInner}</span>
+  </div>`;
 }
 
 const NODE_ICON_PATHS = {
