@@ -277,6 +277,11 @@ h3 { font-size: 1.02rem; font-weight: 700; color: var(--ink); margin-bottom: 6px
 .move-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .move-name { font-weight: 700; font-size: 0.9rem; display: block; }
 .move-meta { font-size: 0.7rem; color: var(--ink-soft); }
+.move-eff { display: block; font-size: 0.7rem; font-weight: 700; margin-top: 2px; }
+.move-eff.eff-super { color: #1f9d55; }
+.move-eff.eff-good { color: #2f855a; }
+.move-eff.eff-bad { color: #b45309; }
+.move-eff.eff-none { color: var(--ink-soft); }
 
 .action-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .action-row.three { grid-template-columns: repeat(3, 1fr); }

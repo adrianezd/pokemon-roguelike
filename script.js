@@ -28,6 +28,17 @@ function getEffectiveness(attackType, defendTypes) {
   return mult;
 }
 
+// Etiqueta de eficacia para mostrar en el botón del movimiento ANTES de
+// usarlo, distinguiendo x4 (súper eficaz, doble tipo débil) de x2 (eficaz).
+function effectivenessLabel(mult) {
+  if (mult === 0) return { text: 'Sin efecto', cls: 'eff-none' };
+  if (mult >= 4) return { text: 'Súper eficaz ×4', cls: 'eff-super' };
+  if (mult >= 2) return { text: 'Eficaz ×2', cls: 'eff-good' };
+  if (mult <= 0.25) return { text: 'Muy poco eficaz ×¼', cls: 'eff-bad' };
+  if (mult < 1) return { text: 'Poco eficaz ×½', cls: 'eff-bad' };
+  return null;
+}
+
 const LEGENDARY_KEYS = new Set(['articuno', 'zapdos', 'moltres', 'mewtwo', 'mew', 'raikou', 'entei', 'suicune', 'lugia', 'ho-oh', 'celebi']);
 
 const EVOLUTION_MAP = {
@@ -286,6 +297,25 @@ function statsForLevel(species, level) {
   };
 }
 
+// Si el Pokémon es de doble tipo, procura que su kit inicial de 3 tenga al
+// menos un movimiento real de CADA tipo (si su repertorio guardado lo
+// incluye), en vez de coger ciegamente los 3 primeros (que podían ser
+// los 3 del mismo tipo dominante, dejando el segundo tipo sin representar).
+function pickDefaultMoves(species) {
+  const pool = species.moves || [];
+  if ((species.types || []).length < 2) return pool.slice(0, 3);
+  const chosen = [];
+  species.types.forEach((t) => {
+    const k = pool.find((key) => MOVES[key] && MOVES[key].type === t && chosen.indexOf(key) === -1);
+    if (k) chosen.push(k);
+  });
+  for (const k of pool) {
+    if (chosen.length >= 3) break;
+    if (chosen.indexOf(k) === -1) chosen.push(k);
+  }
+  return chosen.slice(0, 3);
+}
+
 function createInstance(species, level) {
   const s = statsForLevel(species, level);
   return {
@@ -296,7 +326,7 @@ function createInstance(species, level) {
     atk: s.atk,
     def: s.def,
     spd: s.spd,
-    moves: species.moves.slice(0, 3),
+    moves: pickDefaultMoves(species),
   };
 }
 
@@ -695,7 +725,7 @@ const MAX_HIT_FRACTION = 0.85; // subido desde 0.45: con ventaja elemental (x2),
 // "grandes" acababan dando el mismo daño sin importar la potencia real del movimiento.
 // 0.85 sigue evitando el KO de un solo golpe con las combinaciones más extremas
 // (potencia 150-250 + ventaja de tipo) sin aplanar la potencia en el resto de casos.
-const DMG_SCALE = 0.16;
+const DMG_SCALE = 0.136; // -15% global (0.16 * 0.85), pedido para que las pociones importen más
 
 function activePlayerInst() { return runState.party[battle.playerActive]; }
 function activeEnemyInst() { return battle.enemyTeam[battle.enemyActive]; }
@@ -798,11 +828,15 @@ function renderBattle() {
   } else if (battle.subPanel === 'capture') {
     actionPanel = renderCapturePanel();
   } else {
+    const defSpecies = getSpecies(e.speciesKey);
     const moveButtons = p.moves.map((mKey) => {
       const m = MOVES[mKey];
+      const mult = getEffectiveness(m.type, defSpecies.types);
+      const eff = effectivenessLabel(mult);
       return `<button class="move-btn" ${canAct ? '' : 'disabled'} onclick="onPlayerAction({type:'move', moveKey:'${mKey}'})">
         <span class="move-name">${esc(m.name)}</span>
         <span class="move-meta">${typeBadge(m.type)} · Pot ${m.power} · Prec ${m.accuracy}%</span>
+        ${eff ? `<span class="move-eff ${eff.cls}">${eff.text}</span>` : ''}
       </button>`;
     }).join('');
     const canCapture = battle.kind === 'wild' && runState.party.length < 3 && e.currentHP > 0;
@@ -927,8 +961,10 @@ async function executeMove(side, moveKey) {
   defender.currentHP = Math.max(0, defender.currentHP - dmg);
 
   let effText = '';
-  if (mult >= 2) effText = ' ¡Es muy efectivo!';
-  else if (mult <= 0.5) effText = ' No es muy efectivo…';
+  if (mult >= 4) effText = ' ¡Es SÚPER efectivo (x4)!';
+  else if (mult >= 2) effText = ' ¡Es muy efectivo (x2)!';
+  else if (mult <= 0.25) effText = ' Es muy poco efectivo (x¼)…';
+  else if (mult < 1) effText = ' No es muy efectivo (x½)…';
   logMsg(`${defenderSp.name} recibe ${dmg} de daño.${effText}`);
   renderBattle();
   await delay(500);
@@ -1102,7 +1138,7 @@ async function onBattleWin(opts) {
           p.atk = s.atk;
           p.def = s.def;
           p.spd = s.spd;
-          p.moves = newSpecies.moves.slice(0, 3);
+          p.moves = pickDefaultMoves(newSpecies);
           logMsg(`¡${newSpecies.name} ha sido capaz de evolucionar!`);
         }
       }
