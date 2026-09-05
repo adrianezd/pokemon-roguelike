@@ -813,7 +813,11 @@ const MAX_HIT_FRACTION = 0.85; // subido desde 0.45: con ventaja elemental (x2),
 // "grandes" acababan dando el mismo daño sin importar la potencia real del movimiento.
 // 0.85 sigue evitando el KO de un solo golpe con las combinaciones más extremas
 // (potencia 150-250 + ventaja de tipo) sin aplanar la potencia en el resto de casos.
-const DMG_SCALE = 0.136; // -15% global (0.16 * 0.85), pedido para que las pociones importen más
+const DMG_SCALE = 0.11; // bajado otra vez (era 0.136) para que el daño en general sea todavía menor
+// El tipo debe importar MUCHO: se amplifica el multiplicador real de
+// efectividad antes de aplicarlo al daño (no se toca el multiplicador que
+// se le muestra al jugador en la etiqueta, que sigue siendo el real x2/x4/etc.).
+const TYPE_IMPACT_POWER = 1.5; // x4 real -> x8 de daño; x0.25 real -> x0.125 de daño
 
 function activePlayerInst() { return runState.party[battle.playerActive]; }
 function activeEnemyInst() { return battle.enemyTeam[battle.enemyActive]; }
@@ -1044,7 +1048,8 @@ async function executeMove(side, moveKey) {
   }
   const raw = move.power * (attacker.atk / Math.max(1, defender.def)) * DMG_SCALE;
   const variance = 0.85 + Math.random() * 0.15;
-  let dmg = Math.max(1, Math.round(raw * mult * variance));
+  const dmgMult = Math.pow(mult, TYPE_IMPACT_POWER); // el tipo pesa más en el daño real que en el multiplicador "oficial" mostrado
+  let dmg = Math.max(1, Math.round(raw * dmgMult * variance));
   dmg = Math.min(dmg, Math.max(1, Math.round(defender.maxHP * MAX_HIT_FRACTION)));
   defender.currentHP = Math.max(0, defender.currentHP - dmg);
 
