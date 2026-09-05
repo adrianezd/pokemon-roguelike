@@ -179,10 +179,11 @@ function loadMeta() {
         bestFloor: 0,
         unlockedStarters: DEFAULT_UNLOCKED.slice(),
         dex: {},
+        permanentMoves: {},
       }, parsed);
     }
   } catch (e) { /* ignore corrupt storage */ }
-  return { credits: 0, bestFloor: 0, unlockedStarters: DEFAULT_UNLOCKED.slice(), dex: {} };
+  return { credits: 0, bestFloor: 0, unlockedStarters: DEFAULT_UNLOCKED.slice(), dex: {}, permanentMoves: {} };
 }
 
 function saveMeta() {
@@ -303,17 +304,23 @@ function statsForLevel(species, level) {
 // los 3 del mismo tipo dominante, dejando el segundo tipo sin representar).
 function pickDefaultMoves(species) {
   const pool = species.moves || [];
-  if ((species.types || []).length < 2) return pool.slice(0, 3);
-  const chosen = [];
-  species.types.forEach((t) => {
-    const k = pool.find((key) => MOVES[key] && MOVES[key].type === t && chosen.indexOf(key) === -1);
-    if (k) chosen.push(k);
-  });
+  const chosen = (species.types || []).length < 2 ? [] : [];
+  if ((species.types || []).length >= 2) {
+    species.types.forEach((t) => {
+      const k = pool.find((key) => MOVES[key] && MOVES[key].type === t && chosen.indexOf(key) === -1);
+      if (k) chosen.push(k);
+    });
+  }
   for (const k of pool) {
     if (chosen.length >= 3) break;
     if (chosen.indexOf(k) === -1) chosen.push(k);
   }
-  return chosen.slice(0, 3);
+  // Movimientos desbloqueados PERMANENTEMENTE con Créditos (Mejoras
+  // permanentes, ver renderUpgrades/buyPermanentMove) se añaden siempre,
+  // en cualquier partida futura, para esta especie.
+  const perm = (meta && meta.permanentMoves && meta.permanentMoves[species.key]) || [];
+  perm.forEach((k) => { if (chosen.indexOf(k) === -1 && pool.indexOf(k) !== -1) chosen.push(k); });
+  return chosen; // los 3 base + cualquier movimiento permanente extra desbloqueado, sin límite
 }
 
 function createInstance(species, level) {
@@ -486,6 +493,7 @@ function renderUpgrades() {
     <p class="screen-title">Mejoras permanentes</p>
     <p class="muted mb">Créditos disponibles: <strong>${meta.credits}</strong></p>
     <div class="stack">${rows}</div>
+    <button class="btn btn-secondary mt" onclick="renderPermMovePicker()">📖 Desbloquear movimiento permanente</button>
     <button class="btn btn-outline mt" onclick="renderMenu()">Volver</button>
   `);
 }
@@ -498,6 +506,63 @@ function unlockStarter(key) {
   meta.unlockedStarters.push(key);
   saveMeta();
   renderUpgrades();
+}
+
+/* ---------- MOVIMIENTOS PERMANENTES (mejora meta, no de una sola partida) ---------- */
+// Igual que buyMove()/moveBuyPrice() en la tienda de una partida, pero
+// pagado con meta.credits (persistente) en vez de runState.credits, y el
+// movimiento queda desbloqueado PARA SIEMPRE para esa especie (ver
+// pickDefaultMoves, que ya mezcla meta.permanentMoves en cualquier partida
+// futura, incluida la primera vez que sale ese Pokémon).
+function renderPermMovePicker() {
+  const caughtKeys = Object.keys(meta.dex).filter((k) => meta.dex[k].caught);
+  const options = caughtKeys.map((key) => {
+    const sp = getSpecies(key);
+    if (!sp) return '';
+    const permCount = (meta.permanentMoves[key] || []).length;
+    return `<button class="node-card" onclick="renderPermMoveForSpecies('${key}')">${monAvatarHTML(sp, 'sm')}<span><span class="node-label">${esc(sp.name)}</span><div class="node-desc">${permCount} movimiento(s) permanente(s) extra</div></span></button>`;
+  }).join('');
+  showHTML(`
+    <p class="screen-title">¿A qué Pokémon desbloquear un movimiento permanente?</p>
+    <p class="muted mb">Créditos disponibles: <strong>${meta.credits}</strong></p>
+    <div class="stack">${options || '<p class="muted">Todavía no has capturado ningún Pokémon.</p>'}</div>
+    <button class="btn btn-outline mt" onclick="renderUpgrades()">Volver</button>
+  `);
+}
+
+function renderPermMoveForSpecies(speciesKey) {
+  const sp = getSpecies(speciesKey);
+  const perm = meta.permanentMoves[speciesKey] || [];
+  const available = (sp.moves || []).filter((k) => perm.indexOf(k) === -1);
+  const rows = available.map((k) => {
+    const m = MOVES[k];
+    const price = moveBuyPrice(k);
+    return `
+      <div class="item-card">
+        <div>
+          <div class="item-name">${esc(m.name)}</div>
+          <div class="item-desc">${typeBadge(m.type)} · Pot ${m.power} · Prec ${m.accuracy}%</div>
+        </div>
+        <button class="btn btn-small" ${meta.credits < price ? 'disabled' : ''} onclick="buyPermanentMove('${speciesKey}', '${k}')">${price} Cr.</button>
+      </div>`;
+  }).join('') || '<p class="muted">Ya tiene desbloqueados todos sus movimientos reales conocidos.</p>';
+  showHTML(`
+    <p class="screen-title">Movimiento permanente para ${esc(sp.name)}</p>
+    <p class="muted mb">Créditos disponibles: <strong>${meta.credits}</strong> · Ya tiene ${perm.length} extra permanente(s)</p>
+    <div class="stack">${rows}</div>
+    <button class="btn mt" onclick="renderPermMovePicker()">Volver</button>
+  `);
+}
+
+function buyPermanentMove(speciesKey, moveKey) {
+  const price = moveBuyPrice(moveKey);
+  if (meta.credits < price) return;
+  if (!meta.permanentMoves[speciesKey]) meta.permanentMoves[speciesKey] = [];
+  if (meta.permanentMoves[speciesKey].indexOf(moveKey) !== -1) return;
+  meta.credits -= price;
+  meta.permanentMoves[speciesKey].push(moveKey);
+  saveMeta();
+  renderPermMoveForSpecies(speciesKey);
 }
 
 /* ---------- REGISTRO (Pokédex-style log) ---------- */
