@@ -940,7 +940,7 @@ async function turnMove(moveKey) {
   // Speed determines turn order, but with a ±10% random jitter so a small
   // speed edge doesn't guarantee first move every time (big gaps still win out).
   const entries = [
-    { side: 'player', move: moveKey, spd: activePlayerInst().spd * 1.15 }, // player gets 15% speed bonus
+    { side: 'player', move: moveKey, spd: activePlayerInst().spd * 1.5 }, // player gets a 50% speed bonus
     { side: 'enemy', move: enemyMove, spd: activeEnemyInst().spd * (0.9 + Math.random() * 0.2) },
   ].sort((a, b) => b.spd - a.spd);
 
