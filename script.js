@@ -221,7 +221,7 @@ function createInstance(species, level) {
     atk: s.atk,
     def: s.def,
     spd: s.spd,
-    moves: species.moves.slice(0, 6),
+    moves: species.moves.slice(0, 3),
   };
 }
 
@@ -800,9 +800,11 @@ async function executeMove(side, moveKey) {
 async function turnMove(moveKey) {
   const initialEnemyInst = activeEnemyInst();
   const enemyMove = pickEnemyMove();
+  // Speed determines turn order, but with a ±10% random jitter so a small
+  // speed edge doesn't guarantee first move every time (big gaps still win out).
   const entries = [
-    { side: 'player', move: moveKey, spd: activePlayerInst().spd + Math.random() * 0.01 },
-    { side: 'enemy', move: enemyMove, spd: activeEnemyInst().spd + Math.random() * 0.01 },
+    { side: 'player', move: moveKey, spd: activePlayerInst().spd * (0.9 + Math.random() * 0.2) },
+    { side: 'enemy', move: enemyMove, spd: activeEnemyInst().spd * (0.9 + Math.random() * 0.2) },
   ].sort((a, b) => b.spd - a.spd);
 
   for (const entry of entries) {
