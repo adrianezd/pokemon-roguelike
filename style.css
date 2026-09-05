@@ -168,7 +168,7 @@ h3 { font-size: 1.02rem; font-weight: 700; color: var(--ink); margin-bottom: 6px
   background: #fff;
 }
 .mon-avatar.sm { width: 40px; height: 40px; font-size: 0.85rem; }
-.mon-sprite { width: 82%; height: 82%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 1; }
+.mon-sprite { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; position: relative; z-index: 1; }
 .mon-fallback { position: absolute; inset: 0; }
 .mon-avatar .half { position: absolute; top: 0; bottom: 0; width: 50%; }
 .mon-avatar .half.left { left: 0; }
