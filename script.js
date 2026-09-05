@@ -56,6 +56,12 @@ const STARTER_CONFIG = [
   { key: 'magnemite', cost: 70 },
   { key: 'growlithe', cost: 90 },
   { key: 'ponyta', cost: 120 },
+  { key: 'chikorita', cost: 35 },
+  { key: 'cyndaquil', cost: 35 },
+  { key: 'totodile', cost: 35 },
+  { key: 'mareep', cost: 50 },
+  { key: 'phanpy', cost: 70 },
+  { key: 'larvitar', cost: 90 },
 ];
 let STARTER_POOL = [];
 let DEFAULT_UNLOCKED = [];
@@ -215,7 +221,7 @@ function createInstance(species, level) {
     atk: s.atk,
     def: s.def,
     spd: s.spd,
-    moves: species.moves.slice(0, 4),
+    moves: species.moves.slice(0, 6),
   };
 }
 
@@ -240,7 +246,10 @@ function enemyLevelFor(kind) {
   let offset;
   if (kind === 'wild') offset = -1 + rand(2); // roughly on par, sometimes a bit weaker
   else if (kind === 'trainer') offset = 1; // a modest single edge...
-  else offset = 2; // ...a little more for bosses — but never stacked on top of anything else
+  else offset = 3; // ...a little more for bosses — but never stacked on top of anything else
+  // Boss offset nudged +2 -> +3 for a small, targeted difficulty increase
+  // (content-expansion pass, not a rebalance) — see README "Simulación de
+  // balance" for the original 800-run tuning this builds on.
   return clamp(Math.round(avg + offset), 2, MAX_LEVEL);
 }
 

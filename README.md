@@ -28,12 +28,12 @@ ejecuta en producción) que:
 1. Consulta `/type/{nombre}` para los 18 tipos reales y construye la tabla de
    eficacia completa (18×18) a partir de `damage_relations`, incluyendo el
    nombre oficial en español de cada tipo.
-2. Consulta `/pokemon/{id}` para los Pokémon #1–151 (Generación I), extrayendo
-   tipos y estadísticas base (PS, Ataque, Defensa, Ataque Especial, Defensa
-   Especial y Velocidad — Ataque/Defensa se promedian con su contraparte
-   especial para un único par Ataque/Defensa por sencillez del motor de
-   combate).
-3. Para cada Pokémon, selecciona 4 movimientos reales de nivel de su
+2. Consulta `/pokemon/{id}` para los Pokémon #1–251 (Generaciones I y II),
+   extrayendo tipos y estadísticas base (PS, Ataque, Defensa, Ataque
+   Especial, Defensa Especial y Velocidad — Ataque/Defensa se promedian con
+   su contraparte especial para un único par Ataque/Defensa por sencillez
+   del motor de combate).
+3. Para cada Pokémon, selecciona 6 movimientos reales de nivel de su
    repertorio (`red-blue`, con alternativas si hace falta): prioriza sus
    mejores movimientos de su propio tipo (STAB) y garantiza al menos un
    movimiento de cobertura de otro tipo cuando el repertorio lo permite.
@@ -44,17 +44,18 @@ ejecuta en producción) que:
    `moves-data.json` y `type-chart.json` — el juego en vivo **solo lee estos
    tres archivos estáticos** y nunca llama a PokeAPI en tiempo de ejecución.
 
-Resultado: **151 Pokémon**, **150 movimientos distintos** y los **18 tipos**
-reales con su tabla de eficacia completa. Se validó la integridad de estos
-tres archivos con un script de un solo uso (tipos válidos, estadísticas en
-rango razonable, todo movimiento referenciado existe en `moves-data.json`,
-tabla de tipos completa) antes de construir el juego sobre ellos.
+Resultado: **251 Pokémon** (Generaciones I y II), **movimientos distintos
+según se detalla más abajo** y los **18 tipos** reales con su tabla de
+eficacia completa. Se validó la integridad de estos tres archivos con un
+script de un solo uso (tipos válidos, estadísticas en rango razonable, todo
+movimiento referenciado existe en `moves-data.json`, tabla de tipos
+completa) antes de construir el juego sobre ellos.
 
 ## Diseño del juego
 
 - Mazmorra ramificada de 20 nodos: encuentros salvajes (con captura),
   combates de entrenador, curación, tienda y un jefe cada 5 nodos.
-- Equipo de hasta 3 Pokémon, combate por turnos con 4 movimientos, orden de
+- Equipo de hasta 3 Pokémon, combate por turnos con 6 movimientos, orden de
   turno por Velocidad y cambio de Pokémon activo.
 - Permadeath por partida (el equipo debilitado por completo termina la
   partida), con una moneda meta (**Créditos**) y Pokémon iniciales
@@ -90,14 +91,20 @@ adelantar el segundo miembro de equipo rival produjo la curva final: la
 mayoría de partidas llega a un punto medio sólido sin ser trivial, y solo una
 fracción modesta consigue la victoria completa.
 
+Ajuste posterior (pase de ampliación de contenido, no una nueva
+recalibración): el desplazamiento de nivel de los jefes se subió de +2 a +3
+en `enemyLevelFor` (`script.js`) — un pellizco directo y acotado sobre la
+pelea más dura de cada tramo de 5 nodos, dejando intacto el resto de la
+curva (desplazamiento de entrenador +1, escalado de tamaño de equipo, etc.).
+
 ## Estructura de archivos
 
 ```
 index.html          Página principal + SEO + JSON-LD
 style.css            Estilos (mobile-first, identidad visual original)
 script.js            Lógica del juego (vanilla JS)
-pokedex-data.json     151 Pokémon procesados
-moves-data.json       150 movimientos procesados
+pokedex-data.json     251 Pokémon procesados (Gen I-II)
+moves-data.json       Movimientos procesados (6 por Pokémon)
 type-chart.json       Tabla de eficacia de los 18 tipos reales
 favicon.svg           Icono original (círculo abstracto, no es un Poké Ball oficial)
 manifest.json         Manifest tipo PWA

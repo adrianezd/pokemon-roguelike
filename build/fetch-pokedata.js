@@ -1,7 +1,7 @@
 'use strict';
 /* ============================================================
    ONE-OFF BUILD SCRIPT — run manually with `node build/fetch-pokedata.js`.
-   Fetches Gen 1 Pokémon (#1-151), all 18 types, and the moves they use
+   Fetches Gen 1-2 Pokémon (#1-251), all 18 types, and the moves they use
    from PokeAPI (https://pokeapi.co, free public REST API), then writes
    processed, minimized, static JSON assets into the project root:
      pokedex-data.json, moves-data.json, type-chart.json
@@ -90,7 +90,7 @@ async function fetchMoveDetail(moveName, cache) {
   return info;
 }
 
-// Pick 4 real damaging moves a Pokémon can actually learn: prefer STAB
+// Pick 6 real damaging moves a Pokémon can actually learn: prefer STAB
 // (same type as the Pokémon), plus at least one coverage move of a
 // different type when the learnset allows it.
 async function pickMoves(pokeData, moveCache) {
@@ -112,7 +112,7 @@ async function pickMoves(pokeData, moveCache) {
     });
   }
   // Fallback: any level-up method at all, in case a Pokémon has none of the above groups.
-  if (levelUpNames.length < 4) {
+  if (levelUpNames.length < 6) {
     pokeData.moves.forEach(m => {
       const vgd = m.version_group_details.find(d => d.move_learn_method.name === 'level-up');
       if (vgd && !seen.has(m.move.name)) {
@@ -124,7 +124,7 @@ async function pickMoves(pokeData, moveCache) {
   levelUpNames.sort((a, b) => a.level - b.level);
 
   // Fetch details only for a bounded candidate slice to keep request count sane.
-  const candidateNames = levelUpNames.slice(0, 25).map(m => m.name);
+  const candidateNames = levelUpNames.slice(0, 30).map(m => m.name);
   const details = [];
   for (const name of candidateNames) {
     try {
@@ -151,27 +151,27 @@ async function pickMoves(pokeData, moveCache) {
   const chosenKeys = new Set();
   function add(d) { if (d && !chosenKeys.has(d.key)) { chosen.push(d.key); chosenKeys.add(d.key); } }
 
-  // Up to 2 strong STAB moves.
-  stab.slice(0, 2).forEach(add);
+  // Up to 3 strong STAB moves.
+  stab.slice(0, 3).forEach(add);
   // At least 1 coverage move of a different type, if available.
   if (coverage.length) add(coverage[0]);
   // Fill remaining slots with the next best options (STAB first, then coverage, then anything).
-  const rest = [...stab.slice(2), ...coverage.slice(1), ...details].sort((a, b) => b.power - a.power);
+  const rest = [...stab.slice(3), ...coverage.slice(1), ...details].sort((a, b) => b.power - a.power);
   for (const d of rest) {
-    if (chosen.length >= 4) break;
+    if (chosen.length >= 6) break;
     add(d);
   }
-  return chosen.slice(0, 4);
+  return chosen.slice(0, 6);
 }
 
 async function main() {
   const typeChart = await fetchTypeChart();
 
-  console.log('Fetching Pokémon #1-151...');
+  console.log('Fetching Pokémon #1-251 (Gen I-II)...');
   const moveCache = new Map();
   const pokedex = [];
 
-  for (let id = 1; id <= 151; id++) {
+  for (let id = 1; id <= 251; id++) {
     const data = await getJSON(`${API}/pokemon/${id}`);
     const stats = {};
     data.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
