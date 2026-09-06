@@ -813,17 +813,10 @@ function applyBuff(idx) {
 }
 
 /* ================== BATTLE SYSTEM ================== */
-// Soft cap on any single hit (fraction of the defender's max HP) so a
-// high-power real move (e.g. Explosion/Focus Punch, power 150-250) can't
-// alone swing a fight in one blow — those moves' real drawbacks
-// (self-KO, recharge, etc.) aren't modeled, so this keeps them strong
-// without being an instant-kill button. Tuned via simulation.
-const MAX_HIT_FRACTION = 0.85; // subido desde 0.45: con ventaja elemental (x2), ese tope se
-// alcanzaba con casi cualquier movimiento de potencia media, así que todos los golpes
-// "grandes" acababan dando el mismo daño sin importar la potencia real del movimiento.
-// 0.85 sigue evitando el KO de un solo golpe con las combinaciones más extremas
-// (potencia 150-250 + ventaja de tipo) sin aplanar la potencia en el resto de casos.
-const DMG_SCALE = 0.11; // bajado otra vez (era 0.136) para que el daño en general sea todavía menor
+// (Existió aquí un tope MAX_HIT_FRACTION que limitaba cualquier golpe a una
+// fracción de la vida máxima del rival; se quitó por petición explícita, así
+// que ahora un golpe puede llevarse toda la vida si el daño calculado da para ello.)
+const DMG_SCALE = 0.07; // bajado otra vez (era 0.136) para que el daño en general sea todavía menor
 // El tipo debe importar MUCHO: se amplifica el multiplicador real de
 // efectividad antes de aplicarlo al daño (no se toca el multiplicador que
 // se le muestra al jugador en la etiqueta, que sigue siendo el real x2/x4/etc.).
@@ -1060,7 +1053,6 @@ async function executeMove(side, moveKey) {
   const variance = 0.85 + Math.random() * 0.15;
   const dmgMult = Math.pow(mult, TYPE_IMPACT_POWER); // el tipo pesa más en el daño real que en el multiplicador "oficial" mostrado
   let dmg = Math.max(1, Math.round(raw * dmgMult * variance));
-  dmg = Math.min(dmg, Math.max(1, Math.round(defender.maxHP * MAX_HIT_FRACTION)));
   defender.currentHP = Math.max(0, defender.currentHP - dmg);
 
   let effText = '';
